@@ -16,6 +16,7 @@ The campaign uses separate information layers that must never be silently merged
 | [`03-sky-islands-reference-repository-v1.md`](03-sky-islands-reference-repository-v1.md) | Sky Islands Reference Repository v1.0 | Setting canon: what currently exists, tagged by canon status (TEXT CANON / CURRENT CANON / PROVISIONAL / OPEN / VERSION CONFLICT / LEGACY / REJECTED-SUPERSEDED) |
 | [`04-sky-islands-simulation-layer-v1.md`](04-sky-islands-simulation-layer-v1.md) | Sky Islands Simulation Layer v1.0 | How the setting changes over time when the player isn't looking: weather, routes, economy, wildlife, migration clock |
 | [`05-campaign-initialization-kit-v1.md`](05-campaign-initialization-kit-v1.md) | Campaign Initialization Kit v1.0 — The Aven Corridor | A ready-to-play region: Aven, Pere, Dema, twenty seeded NPCs, fifteen background situations, and session-one openings |
+| [`06-relationship-emphasis.md`](06-relationship-emphasis.md) | Relationship Emphasis Module v1.0 | Player-selected romance opportunity density (Low / Open / Romantic Lean / Romance Forward) — controls opportunity, never outcome |
 
 ### How the layers fit together
 
@@ -24,6 +25,7 @@ The campaign uses separate information layers that must never be silently merged
 * The **RPG Engine** determines *what can happen and how the world advances*.
 * The **Narrative Interaction Model** determines *how experience, attention, relationships, and meaning accumulate through play*.
 * The **Initialization Kit** provides the starting region, cast, and pressures for a new campaign.
+* The **Relationship Emphasis Module** tunes how much romantic opportunity the simulation surfaces, without predetermining attraction or pairings.
 * The **Master Instruction Set** binds the whole thing into the GM's role and design philosophy.
 
 Two runtime layers are created during play rather than stored here:
@@ -46,7 +48,7 @@ The newest explicitly designated repository version supersedes older setting mat
 
 ## Starting a Campaign
 
-Give all six documents to the model as its instructions, then say **START NEW CAMPAIGN**. The GM will ask only enough to begin — name, rough age, what your character does or why they're on Aven, and whether you want to define your past now or discover it through play — then drop you into ordinary life in the Aven Corridor.
+Give all seven documents to the model as its instructions, then say **START NEW CAMPAIGN**. The GM will ask only enough to begin — name, rough age, what your character does or why they're on Aven, whether you want to define your past now or discover it through play, and your desired relationship emphasis (Low / Open / Romantic Lean / Romance Forward) — then drop you into ordinary life in the Aven Corridor.
 
 Out-of-character commands recognized during play: `/status`, `/character`, `/known`, `/suspicions`, `/relationships`, `/threads`, `/recap`, `/save`, `/ooc [question]`.
 
@@ -57,6 +59,7 @@ Out-of-character commands recognized during play: `/status`, `/character`, `/kno
 * **Importance must be earned.** No chosen ones, hidden royalty, or identity-as-key plots. Competent people existed before the player and continue existing.
 * **Knowledge is a mechanic.** Objective reality, player knowledge, player belief, and per-NPC knowledge are tracked separately; information travels through plausible channels only.
 * **Show, don't announce.** Relationships are behavioral systems with asymmetric permissions, not approval meters that unlock scenes.
+* **Romance is opportunity, never outcome.** The relationship emphasis setting controls how much interpersonal proximity and social opportunity the simulation provides; attraction, affection, intimacy, commitment, and compatibility remain separate states, and no NPC is ever designated as a route.
 * **Simulation before drama.** Events happen because `state + pressure + actors + time → change` — never because "the player needs something to do."
 * **Migration is history, not apocalypse.** The ten-year cycle begins as background pressure (bridge inspections, warehouse reservations) and earns its centrality slowly.
 * **Open questions stay open.** The Repository deliberately preserves unresolved canon (the obfuscator lead's final name, Vera's transport, the storm's origin). The RPG must not casually solve them.
