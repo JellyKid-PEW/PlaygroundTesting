@@ -13,7 +13,7 @@ The campaign uses separate information layers that must never be silently merged
 | [`00-master-instruction-set.md`](00-master-instruction-set.md) | Master Instruction Set | Top-level GM role, narrative philosophy, and campaign rules for Talkar |
 | [`01-narrative-interaction-model.md`](01-narrative-interaction-model.md) | Narrative Interaction Model | Setting-agnostic model of attention, perception, relationships, subtext, and narrative memory |
 | [`02-rpg-engine-v2.md`](02-rpg-engine-v2.md) | Persistent Narrative RPG Engine v2 | Setting-independent simulation rules: causality, time, knowledge architecture, consequence, state management |
-| [`03-sky-islands-reference-repository-v1.md`](03-sky-islands-reference-repository-v1.md) | Sky Islands Reference Repository v1.0 | Setting canon: what currently exists, tagged by canon status (TEXT CANON / CURRENT CANON / OPEN / LEGACY / SUPERSEDED) |
+| [`03-sky-islands-reference-repository-v1.md`](03-sky-islands-reference-repository-v1.md) | Sky Islands Reference Repository v1.0 | Setting canon: what currently exists, tagged by canon status (TEXT CANON / CURRENT CANON / PROVISIONAL / OPEN / VERSION CONFLICT / LEGACY / REJECTED-SUPERSEDED) |
 | [`04-sky-islands-simulation-layer-v1.md`](04-sky-islands-simulation-layer-v1.md) | Sky Islands Simulation Layer v1.0 | How the setting changes over time when the player isn't looking: weather, routes, economy, wildlife, migration clock |
 | [`05-campaign-initialization-kit-v1.md`](05-campaign-initialization-kit-v1.md) | Campaign Initialization Kit v1.0 — The Aven Corridor | A ready-to-play region: Aven, Pere, Dema, twenty seeded NPCs, fifteen background situations, and session-one openings |
 
