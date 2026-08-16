@@ -46,9 +46,13 @@ When sources conflict (per Engine §2):
 
 The newest explicitly designated repository version supersedes older setting material. Legacy Talkar lore is **not** automatically Sky Islands canon.
 
+## Playing via the App
+
+The [`app/`](app/) directory contains a standalone local web application that runs the campaign: it loads the seven documents as the GM's system prompt, streams play in a browser UI, persists campaigns to disk, and auto-compacts long campaigns using the Engine's own `/save` mechanism. It works with the Anthropic API (full fidelity, with prompt caching) or any OpenAI-compatible local model server (gpt4all, Ollama, LM Studio). See [`app/README.md`](app/README.md) for setup.
+
 ## Starting a Campaign
 
-Give all seven documents to the model as its instructions, then say **START NEW CAMPAIGN**. The GM will ask only enough to begin — name, rough age, what your character does or why they're on Aven, whether you want to define your past now or discover it through play, and your desired relationship emphasis (Low / Open / Romantic Lean / Romance Forward) — then drop you into ordinary life in the Aven Corridor.
+Give all seven documents to the model as its instructions (or just use the app), then say **START NEW CAMPAIGN**. The GM will ask only enough to begin — name, rough age, what your character does or why they're on Aven, whether you want to define your past now or discover it through play, and your desired relationship emphasis (Low / Open / Romantic Lean / Romance Forward) — then drop you into ordinary life in the Aven Corridor.
 
 Out-of-character commands recognized during play: `/status`, `/character`, `/known`, `/suspicions`, `/relationships`, `/threads`, `/recap`, `/save`, `/ooc [question]`.
 
