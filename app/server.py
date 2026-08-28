@@ -36,6 +36,19 @@ COMPACT_INSTRUCTION = (
 
 class CreateCampaign(BaseModel):
     name: str
+    # Optional: seed the new campaign from an existing campaign's save file,
+    # so play continues from that saved state (Engine §51 portability).
+    source_campaign: str | None = None
+    source_save: str | None = None
+
+
+RESUME_FROM_SAVE = (
+    "OUT OF CHARACTER: this campaign begins from a previously exported campaign "
+    "save. Load the save below as established campaign history and continue the "
+    "campaign seamlessly from that state — do not recap it to the player, and do "
+    "not restart character creation.\n\n=== CAMPAIGN SAVE ===\n{save}\n"
+    "=== END CAMPAIGN SAVE ==="
+)
 
 
 class UserMessage(BaseModel):
@@ -78,7 +91,22 @@ def list_campaigns():
 @app.post("/api/campaigns")
 def create_campaign(body: CreateCampaign):
     name = body.name.strip() or "Untitled campaign"
-    return campaigns.create(name)
+    meta = campaigns.create(name)
+    if body.source_campaign and body.source_save:
+        try:
+            save_text = campaigns.read_save(body.source_campaign, body.source_save)
+        except (FileNotFoundError, ValueError):
+            campaigns.delete(meta["id"])
+            raise HTTPException(404, "source save not found")
+        campaigns.set_context(
+            meta["id"], [{"role": "user", "content": RESUME_FROM_SAVE.format(save=save_text)}]
+        )
+        campaigns.write_save(meta["id"], save_text, "imported")
+        campaigns.append_transcript(
+            meta["id"],
+            {"role": "system", "content": f"Campaign resumed from save {body.source_save}"},
+        )
+    return meta
 
 
 @app.get("/api/campaigns/{campaign_id}")
@@ -177,7 +205,20 @@ def send_message(campaign_id: str, body: UserMessage):
     def event(payload: dict) -> str:
         return f"data: {json.dumps(payload)}\n\n"
 
+    def finish_turn(reply: str, interrupted: bool):
+        """Persist a completed (or partially streamed) turn."""
+        if interrupted:
+            reply += "\n\n*(response interrupted — say \"continue\" to pick up)*"
+        campaigns.append_transcript(campaign_id, {"role": "assistant", "content": reply})
+        context = campaigns.get_context(campaign_id)
+        campaigns.set_context(
+            campaign_id,
+            [*context, {"role": "user", "content": content}, {"role": "assistant", "content": reply}],
+        )
+        campaigns.touch(campaign_id)
+
     def generate():
+        reply_parts = []
         try:
             # Auto-compact before the new turn if the context has grown too far.
             context = campaigns.get_context(campaign_id)
@@ -185,19 +226,16 @@ def send_message(campaign_id: str, body: UserMessage):
             if context_tokens > int(cfg["compact_after_tokens"]):
                 yield event({"type": "status", "text": "Compacting campaign context…"})
                 _run_compaction(campaign_id, cfg, system_prompt)
+                context = campaigns.get_context(campaign_id)
 
             campaigns.append_transcript(campaign_id, {"role": "user", "content": content})
-            context = campaigns.append_context(campaign_id, "user", content)
 
-            reply_parts = []
-            for chunk in llm.stream_reply(cfg, system_prompt, context):
+            outgoing = [*context, {"role": "user", "content": content}]
+            for chunk in llm.stream_reply(cfg, system_prompt, outgoing):
                 reply_parts.append(chunk)
                 yield event({"type": "delta", "text": chunk})
             reply = "".join(reply_parts)
-
-            campaigns.append_transcript(campaign_id, {"role": "assistant", "content": reply})
-            campaigns.append_context(campaign_id, "assistant", reply)
-            campaigns.touch(campaign_id)
+            finish_turn(reply, interrupted=False)
 
             # A /save response is also captured to disk as a real file.
             if content.lower().startswith("/save") and reply.strip():
@@ -206,8 +244,14 @@ def send_message(campaign_id: str, body: UserMessage):
 
             yield event({"type": "done"})
         except llm.BackendError as e:
+            # Keep whatever streamed; a fully failed turn leaves the working
+            # context untouched so a retry doesn't duplicate the user message.
+            if reply_parts:
+                finish_turn("".join(reply_parts), interrupted=True)
             yield event({"type": "error", "text": str(e)})
         except Exception as e:  # surface unexpected failures to the UI
+            if reply_parts:
+                finish_turn("".join(reply_parts), interrupted=True)
             yield event({"type": "error", "text": f"Unexpected server error: {e}"})
 
     return StreamingResponse(

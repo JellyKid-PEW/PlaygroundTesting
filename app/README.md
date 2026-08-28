@@ -6,6 +6,10 @@ A standalone application that runs the Talkar Persistent Narrative RPG. It loads
 
 Requires Python 3.10+.
 
+**Easiest:** double-click / run the launcher — `run.bat` on Windows, `./run.sh` on macOS and Linux. It installs the dependencies on first run and starts the server.
+
+Or manually:
+
 ```bash
 cd app
 pip install -r requirements.txt
@@ -50,6 +54,12 @@ The app keeps two records per campaign:
 When the working context passes the "Compact after" threshold (or you press **Compact**), the app asks the GM for a complete portable campaign save — the exact save-state format the RPG Engine itself defines (§51) — writes it to `app/data/campaigns/<id>/saves/`, and restarts the working context from that save plus the last few exchanges. Play continues seamlessly, and every save file doubles as a portable backup you could hand to any other instance of the GM.
 
 Typing `/save` yourself also writes the GM's response to the saves folder.
+
+The **Saves** button in the top bar browses a campaign's save files, and **New campaign from this save** starts a fresh campaign seeded from any of them — the same portability the Engine's save format was designed for. If a turn fails mid-stream (network drop, backend error), whatever streamed is kept and marked interrupted; a turn that produced nothing leaves the campaign state untouched, so just send your message again.
+
+## Verifying an install
+
+`python test_e2e.py` runs the whole flow — streaming, `/save`, compaction, error recovery, resume-from-save — against a built-in mock model server. No API key needed; five PASS lines means the app is healthy.
 
 ## Where things live
 
