@@ -32,7 +32,7 @@ def build_system_prompt() -> str:
                 "Run the app from a checkout of the full repository."
             )
         parts.append(f"\n===== BEGIN DOCUMENT: {name} =====\n")
-        parts.append(path.read_text())
+        parts.append(path.read_text(encoding="utf-8"))
         parts.append(f"\n===== END DOCUMENT: {name} =====\n")
     return "".join(parts)
 

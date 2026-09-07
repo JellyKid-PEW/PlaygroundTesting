@@ -26,7 +26,7 @@ BASE = f"http://127.0.0.1:{APP_PORT}"
 GM_REPLY = "Rain taps the pier at *Aven's* Lower Port.\n\nWhat do you do?"
 SAVE_REPLY = "CAMPAIGN SAVE\nPlayer: Test. Location: Aven. Migration Stage: 1."
 
-mock_state = {"fail_next": False}
+mock_state = {"fail_next": False, "truncate_next": False}
 
 
 class MockLLM(BaseHTTPRequestHandler):
@@ -37,6 +37,17 @@ class MockLLM(BaseHTTPRequestHandler):
             self.send_response(500)
             self.end_headers()
             self.wfile.write(b"mock failure")
+            return
+        if mock_state["truncate_next"]:
+            mock_state["truncate_next"] = False
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.end_headers()
+            chunk = {"choices": [{"delta": {"content": "Partial repl"}}]}
+            self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode())
+            tail = {"choices": [{"delta": {}, "finish_reason": "length"}]}
+            self.wfile.write(f"data: {json.dumps(tail)}\n\n".encode())
+            self.wfile.write(b"data: [DONE]\n\n")
             return
         last = body["messages"][-1]["content"]
         if "SYSTEM MAINTENANCE" in last or last.lower().startswith("/save"):
@@ -151,6 +162,28 @@ def main():
         events = send_message(client, campaign_id, "hello again")
         assert events["done"]
         print("PASS  error recovery")
+
+        # a truncated compaction save must NOT replace the working context
+        before = campaigns.get_context(campaign_id)
+        mock_state["truncate_next"] = True
+        response = client.post(f"{BASE}/api/campaigns/{campaign_id}/compact")
+        assert response.status_code == 502, response.status_code
+        assert campaigns.get_context(campaign_id) == before
+        print("PASS  truncated compaction rejected")
+
+        # ...but an interactive turn that hits max_tokens is kept, annotated
+        mock_state["truncate_next"] = True
+        events = send_message(client, campaign_id, "keep going")
+        assert events["done"]
+        assert "cut off at the max_tokens limit" in "".join(events["deltas"])
+        assert "cut off at the max_tokens limit" in campaigns.get_context(campaign_id)[-1]["content"]
+        print("PASS  interactive truncation annotated")
+
+        # unicode round-trip through saves (the docs use →, —, ↔ heavily)
+        unicode_text = "Route Pere → Aven — storm ↔ wake"
+        name = campaigns.write_save(campaign_id, unicode_text, "unicode")
+        assert campaigns.read_save(campaign_id, name) == unicode_text
+        print("PASS  unicode save round-trip")
 
         # resume-from-save creates a seeded campaign
         save_name = data["saves"][-1]

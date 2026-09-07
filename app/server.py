@@ -219,6 +219,7 @@ def send_message(campaign_id: str, body: UserMessage):
 
     def generate():
         reply_parts = []
+        persisted = False
         try:
             # Auto-compact before the new turn if the context has grown too far.
             context = campaigns.get_context(campaign_id)
@@ -231,11 +232,27 @@ def send_message(campaign_id: str, body: UserMessage):
             campaigns.append_transcript(campaign_id, {"role": "user", "content": content})
 
             outgoing = [*context, {"role": "user", "content": content}]
-            for chunk in llm.stream_reply(cfg, system_prompt, outgoing):
+            meta = {}
+            for chunk in llm.stream_reply(cfg, system_prompt, outgoing, meta):
                 reply_parts.append(chunk)
                 yield event({"type": "delta", "text": chunk})
             reply = "".join(reply_parts)
+
+            if not reply.strip():
+                # Nothing usable came back (e.g. a local server emitting only
+                # error objects) — leave the working context untouched.
+                yield event({"type": "error", "text": "The model returned an empty response — try again."})
+                return
+            if meta.get("stop_reason") == "max_tokens":
+                note = (
+                    "\n\n*(Response was cut off at the max_tokens limit — "
+                    'raise it in Settings and say "continue".)*'
+                )
+                reply += note
+                yield event({"type": "delta", "text": note})
+
             finish_turn(reply, interrupted=False)
+            persisted = True
 
             # A /save response is also captured to disk as a real file.
             if content.lower().startswith("/save") and reply.strip():
@@ -245,18 +262,20 @@ def send_message(campaign_id: str, body: UserMessage):
             yield event({"type": "done"})
         except GeneratorExit:
             # Client disconnected mid-stream (tab closed / refresh): keep the
-            # partial reply so the turn survives on reload.
-            if reply_parts:
+            # partial reply so the turn survives on reload. `persisted` guards
+            # against double-writing a turn that already finished cleanly and
+            # then hit the disconnect at the trailing done/status yield.
+            if reply_parts and not persisted:
                 finish_turn("".join(reply_parts), interrupted=True)
             raise
         except llm.BackendError as e:
             # Keep whatever streamed; a fully failed turn leaves the working
             # context untouched so a retry doesn't duplicate the user message.
-            if reply_parts:
+            if reply_parts and not persisted:
                 finish_turn("".join(reply_parts), interrupted=True)
             yield event({"type": "error", "text": str(e)})
         except Exception as e:  # surface unexpected failures to the UI
-            if reply_parts:
+            if reply_parts and not persisted:
                 finish_turn("".join(reply_parts), interrupted=True)
             yield event({"type": "error", "text": f"Unexpected server error: {e}"})
 

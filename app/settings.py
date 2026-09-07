@@ -31,7 +31,7 @@ def load() -> dict:
     settings = dict(DEFAULTS)
     if CONFIG_PATH.exists():
         try:
-            settings.update(json.loads(CONFIG_PATH.read_text()))
+            settings.update(json.loads(CONFIG_PATH.read_text(encoding="utf-8")))
         except (json.JSONDecodeError, OSError):
             pass
     return settings
@@ -42,7 +42,7 @@ def save(updates: dict) -> dict:
     for key, value in updates.items():
         if key in DEFAULTS:
             settings[key] = value
-    CONFIG_PATH.write_text(json.dumps(settings, indent=2))
+    CONFIG_PATH.write_text(json.dumps(settings, indent=2), encoding="utf-8")
     return settings
 
 
