@@ -243,6 +243,12 @@ def send_message(campaign_id: str, body: UserMessage):
                 yield event({"type": "status", "text": f"Save written: saves/{filename}"})
 
             yield event({"type": "done"})
+        except GeneratorExit:
+            # Client disconnected mid-stream (tab closed / refresh): keep the
+            # partial reply so the turn survives on reload.
+            if reply_parts:
+                finish_turn("".join(reply_parts), interrupted=True)
+            raise
         except llm.BackendError as e:
             # Keep whatever streamed; a fully failed turn leaves the working
             # context untouched so a retry doesn't duplicate the user message.

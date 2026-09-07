@@ -248,10 +248,12 @@ function renderMarkdown(text) {
     if (lines.every((l) => /^[-*]\s+/.test(l))) {
       return "<ul>" + lines.map((l) => "<li>" + inline(esc(l.replace(/^[-*]\s+/, ""))) + "</li>").join("") + "</ul>";
     }
-    const h = block.match(/^(#{1,3})\s+(.*)$/s);
-    if (h) {
-      const level = h[1].length;
-      return `<h${level}>` + inline(esc(h[2])) + `</h${level}>`;
+    if (lines.length === 1) {
+      const h = block.match(/^(#{1,3})\s+(.+)$/);
+      if (h) {
+        const level = h[1].length;
+        return `<h${level}>` + inline(esc(h[2])) + `</h${level}>`;
+      }
     }
     return "<p>" + lines.map((l) => inline(esc(l))).join("<br>") + "</p>";
   }).join("");
@@ -364,6 +366,7 @@ async function send() {
           addMessage("system", evt.text);
         } else if (evt.type === "error") {
           if (!acc) gmDiv.remove();
+          else acc += '\n\n*(response interrupted — say "continue" to pick up)*';
           addMessage("error", evt.text);
         }
       }
